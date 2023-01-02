@@ -78,7 +78,7 @@ func (pgs *storage) GetUserHash(ctx context.Context, login string) (id int, hash
 	row := pgs.db.QueryRowContext(ctx, query, login)
 	err = row.Scan(&id, &hash)
 	if err != nil {
-		return 0, "", err
+		return 0, "", domain.ErrInvalidPassword
 	}
 	return id, hash, nil
 }
