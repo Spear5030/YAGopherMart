@@ -16,6 +16,7 @@ func New(h *handler.Handler) http.Handler {
 	//r.Get("/{id}", h.GetURL)
 	//r.Get("/ping", h.PingDB)
 	r.Post("/api/user/register", h.RegisterUser)
+	r.Post("/api/user/login", h.LoginUser)
 	//
 	//r.Group(func(r chi.Router) {
 	//	r.Use(middleware.SetHeader("Content-Type", "application/json"))

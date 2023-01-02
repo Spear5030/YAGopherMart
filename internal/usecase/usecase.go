@@ -10,6 +10,7 @@ import (
 
 type storager interface {
 	RegisterUser(ctx context.Context, login string, hash string) (int, error)
+	GetUserHash(ctx context.Context, login string) (int, string, error)
 }
 
 type usecase struct {
@@ -24,20 +25,40 @@ func New(logger *zap.Logger, storage storager) *usecase {
 	}
 }
 
-func (uc *usecase) RegisterUser(ctx context.Context, login string, password string) (int, error) {
+func (uc *usecase) RegisterUser(ctx context.Context, login string, password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	id, err := uc.storage.RegisterUser(ctx, login, string(hashedPassword))
+	if err != nil {
+		return "", err
+	}
+	return genToken(id)
+}
+
+func (uc *usecase) LoginUser(ctx context.Context, login string, password string) (string, error) {
+
+	id, hash, err := uc.storage.GetUserHash(ctx, login)
+	if err != nil {
+		return "", err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return "", err
+	}
+	return genToken(id)
+}
+
+func genToken(id int) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256, jwt.MapClaims{
-			"id":        id,
-			"ExpiresAt": jwt.NewNumericDate(time.Unix(1516239022, 0)),
+			"ID":        id,
+			"ExpiresAt": jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // TODO Config?
 		})
-
-	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString("hmacSampleSecret")
-
-	return id, err
+	tokenString, err := token.SignedString([]byte("hmacSampleSecret")) //TODO Config
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

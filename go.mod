@@ -12,6 +12,7 @@ require (
 require (
 	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	go.uber.org/atomic v1.10.0 // indirect
