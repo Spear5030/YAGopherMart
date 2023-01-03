@@ -21,7 +21,7 @@ func New(h *handler.Handler) http.Handler {
 	//
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Authenticator)
-		//r.Get("/api/user/logout",)
+		r.Post("/api/user/orders", h.PostOrder)
 	})
 	//	r.Use(middleware.SetHeader("Content-Type", "application/json"))
 	//	r.Post("/api/shorten", h.PostJSON)

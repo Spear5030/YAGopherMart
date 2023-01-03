@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/Spear5030/YAGopherMart/domain"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/joeljunstrom/go-luhn"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -95,5 +96,20 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Authorization", "Bearer "+tokenString)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !luhn.Valid(string(b)) {
+		http.Error(w, "Invalid order number", http.StatusBadRequest)
+		return
+	}
+
+	w.Write(b)
 	w.WriteHeader(http.StatusOK)
 }
