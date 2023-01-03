@@ -106,7 +106,7 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !luhn.Valid(string(b)) {
-		http.Error(w, "Invalid order number", http.StatusBadRequest)
+		http.Error(w, "Invalid order number", http.StatusUnprocessableEntity)
 		return
 	}
 
