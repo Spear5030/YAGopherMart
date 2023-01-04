@@ -18,6 +18,7 @@ type useCase interface {
 	RegisterUser(ctx context.Context, login string, password string) (int, error)
 	LoginUser(ctx context.Context, login string, password string) (int, error)
 	PostOrder(ctx context.Context, num string, userId int) error
+	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 }
 
 type Handler struct {
@@ -135,4 +136,25 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+		h.logger.Debug("Error with JWT token", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	userID, ok := claims["id"].(float64)
+	if !ok {
+		h.logger.Debug("Error with JWT token")
+		h.logger.Debug(fmt.Sprint(claims))
+		http.Error(w, "Error with JWT token", http.StatusBadRequest)
+		return
+	}
+	orders, err := h.useCase.GetOrders(r.Context(), int(userID))
+	ordersJSON, err := json.Marshal(orders)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(ordersJSON)
 }

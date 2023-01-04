@@ -86,9 +86,9 @@ func (pgs *storage) GetUserHash(ctx context.Context, login string) (id int, hash
 func (pgs *storage) PostOrder(ctx context.Context, num string, userID int) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	query := `insert into orders(number, user_id, status)  
-       			values($1,$2,$3);`
-	_, err := pgs.db.ExecContext(ctx, query, num, userID, 1) //1 for NEW
+	query := `insert into orders(number, user_id, status, uploaded_at)  
+       			values($1,$2,$3,$4);`
+	_, err := pgs.db.ExecContext(ctx, query, num, userID, 1, time.Now().UTC()) //1 for NEW
 	var pgErr *pgconn.PgError
 	if err != nil {
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -107,4 +107,36 @@ func (pgs *storage) PostOrder(ctx context.Context, num string, userID int) error
 	} else {
 		return nil
 	}
+}
+
+func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, error) {
+	var orders []domain.Order
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	query := `select o.number, s.status, o.uploaded_at, o.accrual from orders o
+                join order_status s 
+                    on	o.status=s.id 
+       			where o.user_id=$1
+					order by o.uploaded_at;`
+	rows, err := pgs.db.QueryContext(ctx, query, userID)
+	defer rows.Close()
+	if err != nil {
+		pgs.logger.Debug(err.Error())
+		return nil, err
+	}
+	for rows.Next() {
+		var order domain.Order
+		var acc sql.NullInt64
+		err = rows.Scan(&order.Number, &order.Status, &order.UploadedAt, &acc)
+		if acc.Valid {
+			order.Accrual = acc.Int64
+		}
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+		} else {
+			orders = append(orders, order)
+		}
+
+	}
+	return orders, nil
 }

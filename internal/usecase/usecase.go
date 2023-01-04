@@ -13,6 +13,7 @@ type storager interface {
 	RegisterUser(ctx context.Context, login string, hash string) (int, error)
 	GetUserHash(ctx context.Context, login string) (int, string, error)
 	PostOrder(ctx context.Context, num string, userID int) error
+	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 }
 
 type usecase struct {
@@ -57,6 +58,10 @@ func (uc *usecase) LoginUser(ctx context.Context, login string, password string)
 
 func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error {
 	return uc.storage.PostOrder(ctx, num, userID)
+}
+
+func (uc *usecase) GetOrders(ctx context.Context, userID int) ([]domain.Order, error) {
+	return uc.storage.GetOrders(ctx, userID)
 }
 
 func genToken(id int) (string, error) {

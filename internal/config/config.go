@@ -8,7 +8,7 @@ import (
 type Config struct {
 	Addr string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
 	//Database string `env:"DATABASE_URI"`
-	Database string `env:"DATABASE_URI" envDefault:"host=localhost port=5432 user=postgres password=031995"`
+	Database string `env:"DATABASE_URI" envDefault:"host=localhost port=5432 user=postgres password=031995 TimeZone=UTC"`
 	Key      string `env:"COOKIES_KEY" envDefault:"V3ry$trongK3y"`
 	Accrual  string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:"localhost:8081"`
 }
