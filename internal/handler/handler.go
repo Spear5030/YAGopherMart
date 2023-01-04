@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Spear5030/YAGopherMart/domain"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/joeljunstrom/go-luhn"
@@ -16,6 +17,7 @@ import (
 type useCase interface {
 	RegisterUser(ctx context.Context, login string, password string) (int, error)
 	LoginUser(ctx context.Context, login string, password string) (int, error)
+	PostOrder(ctx context.Context, num string, userId int) error
 }
 
 type Handler struct {
@@ -109,7 +111,28 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid order number", http.StatusUnprocessableEntity)
 		return
 	}
-
-	w.Write(b)
-	w.WriteHeader(http.StatusOK)
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+		h.logger.Debug("Error with JWT token", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	userID, ok := claims["id"].(float64)
+	if !ok {
+		h.logger.Debug("Error with JWT token")
+		h.logger.Debug(fmt.Sprint(claims))
+		http.Error(w, "Error with JWT token", http.StatusBadRequest)
+		return
+	}
+	err = h.useCase.PostOrder(r.Context(), string(b), int(userID))
+	if err != nil {
+		if errors.Is(err, domain.ErrAnotherUser) {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		} else if errors.Is(err, domain.ErrAlreadyUploaded) {
+			http.Error(w, err.Error(), http.StatusOK)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusAccepted)
 }

@@ -12,6 +12,7 @@ import (
 type storager interface {
 	RegisterUser(ctx context.Context, login string, hash string) (int, error)
 	GetUserHash(ctx context.Context, login string) (int, string, error)
+	PostOrder(ctx context.Context, num string, userID int) error
 }
 
 type usecase struct {
@@ -52,6 +53,10 @@ func (uc *usecase) LoginUser(ctx context.Context, login string, password string)
 	}
 	//return genToken(id)
 	return id, nil
+}
+
+func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error {
+	return uc.storage.PostOrder(ctx, num, userID)
 }
 
 func genToken(id int) (string, error) {

@@ -82,3 +82,29 @@ func (pgs *storage) GetUserHash(ctx context.Context, login string) (id int, hash
 	}
 	return id, hash, nil
 }
+
+func (pgs *storage) PostOrder(ctx context.Context, num string, userID int) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	query := `insert into orders(number, user_id, status)  
+       			values($1,$2,$3);`
+	_, err := pgs.db.ExecContext(ctx, query, num, userID, 1) //1 for NEW
+	var pgErr *pgconn.PgError
+	if err != nil {
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			pgs.logger.Debug("Unique error")
+			var userQuery int
+			query = `select user_id from orders
+						where number=$1`
+			pgs.db.QueryRowContext(ctx, query, num).Scan(&userQuery)
+			if userQuery == userID {
+				return domain.ErrAlreadyUploaded
+			}
+			return domain.ErrAnotherUser
+		}
+		pgs.logger.Debug("post error", zap.Error(err))
+		return err
+	} else {
+		return nil
+	}
+}
