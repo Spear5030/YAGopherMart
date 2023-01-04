@@ -136,7 +136,6 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 		} else {
 			orders = append(orders, order)
 		}
-
 	}
 	return orders, nil
 }

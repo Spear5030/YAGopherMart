@@ -153,6 +153,10 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orders, err := h.useCase.GetOrders(r.Context(), int(userID))
+	if len(orders) == 0 {
+		http.Error(w, "No entries", http.StatusNoContent)
+		return
+	}
 	ordersJSON, err := json.Marshal(orders)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
