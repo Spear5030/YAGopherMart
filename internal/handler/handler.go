@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Spear5030/YAGopherMart/domain"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/joeljunstrom/go-luhn"
@@ -112,20 +111,13 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid order number", http.StatusUnprocessableEntity)
 		return
 	}
-	_, claims, err := jwtauth.FromContext(r.Context())
+	userID, err := getUserID(r.Context())
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	userID, ok := claims["id"].(float64)
-	if !ok {
-		h.logger.Debug("Error with JWT token")
-		h.logger.Debug(fmt.Sprint(claims))
-		http.Error(w, "Error with JWT token", http.StatusBadRequest)
-		return
-	}
-	err = h.useCase.PostOrder(r.Context(), string(b), int(userID))
+	err = h.useCase.PostOrder(r.Context(), string(b), userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrAnotherUser) {
 			http.Error(w, err.Error(), http.StatusConflict)
@@ -139,20 +131,13 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	userID, err := getUserID(r.Context())
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	userID, ok := claims["id"].(float64)
-	if !ok {
-		h.logger.Debug("Error with JWT token")
-		h.logger.Debug(fmt.Sprint(claims))
-		http.Error(w, "Error with JWT token", http.StatusBadRequest)
-		return
-	}
-	orders, err := h.useCase.GetOrders(r.Context(), int(userID))
+	orders, err := h.useCase.GetOrders(r.Context(), userID)
 	if len(orders) == 0 {
 		http.Error(w, "No entries", http.StatusNoContent)
 		return
@@ -161,4 +146,16 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersJSON)
+}
+
+func getUserID(ctx context.Context) (int, error) {
+	_, claims, err := jwtauth.FromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	userID, ok := claims["id"].(float64)
+	if !ok {
+		return 0, err
+	}
+	return int(userID), nil
 }
