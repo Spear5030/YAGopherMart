@@ -63,7 +63,12 @@ func (uc *usecase) LoginUser(ctx context.Context, login string, password string)
 }
 
 func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error {
-	return uc.storage.PostOrder(ctx, num, userID)
+	err := uc.storage.PostOrder(ctx, num, userID)
+	if err != nil {
+		return err
+	}
+	time.AfterFunc(500*time.Millisecond, func() { uc.WorkWithOrder(ctx, num) })
+	return nil
 }
 
 func (uc *usecase) GetOrders(ctx context.Context, userID int) ([]domain.Order, error) {
