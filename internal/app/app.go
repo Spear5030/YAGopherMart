@@ -26,7 +26,7 @@ func New(cfg config.Config) (*App, error) {
 	}
 
 	repo, err := storage.New(lg, cfg.Database)
-	useCase := usecase.New(lg, repo)
+	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase)
 	r := router.New(h)
 	srv := &http.Server{

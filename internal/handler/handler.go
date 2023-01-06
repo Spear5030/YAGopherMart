@@ -148,6 +148,27 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	w.Write(ordersJSON)
 }
 
+func (h *Handler) GetBalance(w http.ResponseWriter, r *http.Request) {
+
+	_, err := getUserID(r.Context())
+	if err != nil {
+		h.logger.Debug("Error with JWT token", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	//balance, err := h.useCase.GetBalance(r.Context(), userID)
+	// TODO need withdrawns
+}
+
+func (h *Handler) PostWithdraw(w http.ResponseWriter, r *http.Request) {
+	_, err := getUserID(r.Context())
+	if err != nil {
+		h.logger.Debug("Error with JWT token", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
 func getUserID(ctx context.Context) (int, error) {
 	_, claims, err := jwtauth.FromContext(ctx)
 	if err != nil {

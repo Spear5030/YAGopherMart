@@ -67,7 +67,6 @@ func (pgs *storage) RegisterUser(ctx context.Context, login string, hash string)
 	} else {
 		return id, nil
 	}
-	return 0, err
 }
 
 func (pgs *storage) GetUserHash(ctx context.Context, login string) (id int, hash string, err error) {
@@ -109,6 +108,54 @@ func (pgs *storage) PostOrder(ctx context.Context, num string, userID int) error
 	}
 }
 
+func (pgs *storage) UpdateOrder(ctx context.Context, accrual domain.Accrual) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if accrual.Accrual > 0 {
+		// todo TX
+		tx, err := pgs.db.Begin()
+		if err != nil {
+			pgs.logger.Debug("update TX error" + err.Error())
+			return err
+		}
+		defer tx.Rollback()
+
+		query := `update orders set status = s.id, accrual = $2, updated_at = $3
+              		from order_status s 
+				where number=$4 and s.status=$1;`
+		_, err = tx.ExecContext(ctx, query, accrual.Status, accrual.Accrual, time.Now().UTC(), accrual.Order)
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+			return err
+		}
+		// some strange with balance. check default 0
+		query = `update users set  balance = balance + $1
+             		from orders o 
+				where id= o.user_id and o.number=$2;`
+		_, err = tx.ExecContext(ctx, query, accrual.Accrual, accrual.Order)
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+			return err
+		}
+		err = tx.Commit()
+		if err != nil {
+			pgs.logger.Debug("update TX error" + err.Error())
+			return err
+		}
+	} else {
+		query := `update orders set status = s.id, updated_at = $3
+              		from order_status s 
+				where number=$4 and s.status=$1;`
+		_, err := pgs.db.ExecContext(ctx, query, accrual.Status, time.Now().UTC())
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
 func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, error) {
 	var orders []domain.Order
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -126,10 +173,10 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 	}
 	for rows.Next() {
 		var order domain.Order
-		var acc sql.NullInt64
+		var acc sql.NullFloat64
 		err = rows.Scan(&order.Number, &order.Status, &order.UploadedAt, &acc)
 		if acc.Valid {
-			order.Accrual = acc.Int64
+			order.Accrual = acc.Float64
 		}
 		if err != nil {
 			pgs.logger.Debug(err.Error())
