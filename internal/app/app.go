@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spear5030/YAGopherMart/db/migrate"
 	"github.com/Spear5030/YAGopherMart/internal/config"
 	"github.com/Spear5030/YAGopherMart/internal/handler"
 	"github.com/Spear5030/YAGopherMart/internal/router"
@@ -24,7 +25,11 @@ func New(cfg config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	err = migrate.Migrate(cfg.Database, migrate.Migrations)
+	if err != nil {
+		lg.Debug(err.Error())
+		return nil, err
+	}
 	repo, err := storage.New(lg, cfg.Database)
 	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase)
