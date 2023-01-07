@@ -20,6 +20,7 @@ type useCase interface {
 	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 	GetBalance(ctx context.Context, userID int) (float64, error)
 	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
+	GetBalanceAndWithdrawn(ctx context.Context, userID int) (balance float64, withdrawn float64, err error)
 }
 
 type Handler struct {
@@ -150,15 +151,25 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	w.Write(ordersJSON)
 }
 
-func (h *Handler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	_, err := getUserID(r.Context())
+func (h *Handler) GetBalanceAndWithdrawn(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r.Context())
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	//balance, err := h.useCase.GetBalance(r.Context(), userID)
-	// TODO need withdrawals
+	balance, withdrawn, err := h.useCase.GetBalanceAndWithdrawn(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	tmp := struct {
+		Balance   float64 `json:"balance"`
+		Withdrawn float64 `json:"withdrawn"`
+	}{Balance: balance, Withdrawn: withdrawn}
+	ordersJSON, err := json.Marshal(tmp)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(ordersJSON)
 }
 
 func (h *Handler) PostWithdraw(w http.ResponseWriter, r *http.Request) {

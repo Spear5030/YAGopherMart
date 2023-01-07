@@ -23,7 +23,7 @@ func New(h *handler.Handler) http.Handler {
 		r.Use(jwtauth.Authenticator)
 		r.Post("/api/user/orders", h.PostOrder)
 		r.Get("/api/user/orders", h.GetOrders)
-		r.Get("/api/user/balance", h.GetBalance)
+		r.Get("/api/user/balance", h.GetBalanceAndWithdrawn)
 		r.Post("/api/user/balance/withdraw", h.PostWithdraw)
 
 	})

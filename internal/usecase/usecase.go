@@ -19,6 +19,7 @@ type storager interface {
 	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 	UpdateOrder(ctx context.Context, accrual domain.Accrual) error
 	GetBalance(ctx context.Context, userID int) (float64, error)
+	GetWithdrawn(ctx context.Context, userID int) (float64, error)
 	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
 }
 
@@ -118,6 +119,12 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 
 func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) {
 	return uc.storage.GetBalance(ctx, userID)
+}
+
+func (uc *usecase) GetBalanceAndWithdrawn(ctx context.Context, userID int) (balance float64, withdrawn float64, err error) {
+	balance, err = uc.storage.GetBalance(ctx, userID)
+	withdrawn, err = uc.storage.GetWithdrawn(ctx, userID)
+	return
 }
 
 func (uc *usecase) PostWithdraw(ctx context.Context, userID int, order string, sum float64) error {

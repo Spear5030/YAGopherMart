@@ -122,13 +122,27 @@ func (pgs *storage) GetBalance(ctx context.Context, userID int) (balance float64
 	return balance, nil
 }
 
+func (pgs *storage) GetWithdrawn(ctx context.Context, userID int) (withdrawn float64, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := `select froms withdrawals(sum)  
+       			where user_id = $1;`
+	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&withdrawn)
+	if err != nil {
+		pgs.logger.Debug("get withdrawn error", zap.Error(err))
+		return 0, err
+	}
+	return withdrawn, nil
+}
+
 func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, sum float64) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	query := `insert into withdrawals(number, sum)  
+	query := `insert into withdrawals(number,user_id, sum)  
        			values($1,$2,$3);`
-	_, err := pgs.db.ExecContext(ctx, query, order, userID, 1, time.Now().UTC()) //1 for NEW
+	_, err := pgs.db.ExecContext(ctx, query, order, userID, sum)
 	return err
 }
 
