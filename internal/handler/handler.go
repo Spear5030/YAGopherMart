@@ -18,6 +18,8 @@ type useCase interface {
 	LoginUser(ctx context.Context, login string, password string) (int, error)
 	PostOrder(ctx context.Context, num string, userId int) error
 	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
+	GetBalance(ctx context.Context, userID int) (float64, error)
+	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
 }
 
 type Handler struct {
@@ -149,7 +151,6 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetBalance(w http.ResponseWriter, r *http.Request) {
-
 	_, err := getUserID(r.Context())
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
@@ -157,16 +158,42 @@ func (h *Handler) GetBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//balance, err := h.useCase.GetBalance(r.Context(), userID)
-	// TODO need withdrawns
+	// TODO need withdrawals
 }
 
 func (h *Handler) PostWithdraw(w http.ResponseWriter, r *http.Request) {
-	_, err := getUserID(r.Context())
+	userID, err := getUserID(r.Context())
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	withdrawJSON := struct {
+		Order string  `json:"order"`
+		Sum   float64 `json:"sum"`
+	}{}
+	if err = json.Unmarshal(b, &withdrawJSON); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	if !luhn.Valid(withdrawJSON.Order) {
+		http.Error(w, "Invalid order number", http.StatusUnprocessableEntity)
+		return
+	}
+	err = h.useCase.PostWithdraw(r.Context(), userID, withdrawJSON.Order, withdrawJSON.Sum)
+	if err != nil {
+		if errors.Is(err, domain.ErrInsufficientBalance) {
+			http.Error(w, err.Error(), http.StatusPaymentRequired)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func getUserID(ctx context.Context) (int, error) {

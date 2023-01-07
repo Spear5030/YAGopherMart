@@ -18,6 +18,8 @@ type storager interface {
 	PostOrder(ctx context.Context, num string, userID int) error
 	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 	UpdateOrder(ctx context.Context, accrual domain.Accrual) error
+	GetBalance(ctx context.Context, userID int) (float64, error)
+	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
 }
 
 type usecase struct {
@@ -112,6 +114,21 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 		//todo 429 retry after
 	}
 	//uc.storage.
+}
+
+func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) {
+	return uc.storage.GetBalance(ctx, userID)
+}
+
+func (uc *usecase) PostWithdraw(ctx context.Context, userID int, order string, sum float64) error {
+	balance, err := uc.storage.GetBalance(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if balance < sum {
+		return domain.ErrInsufficientBalance
+	}
+	return uc.storage.PostWithdraw(ctx, userID, order, sum)
 }
 
 func genToken(id int) (string, error) {

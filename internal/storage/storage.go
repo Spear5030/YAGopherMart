@@ -108,6 +108,30 @@ func (pgs *storage) PostOrder(ctx context.Context, num string, userID int) error
 	}
 }
 
+func (pgs *storage) GetBalance(ctx context.Context, userID int) (balance float64, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := `select froms users(balance)  
+       			where id = $1;`
+	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&balance)
+	if err != nil {
+		pgs.logger.Debug("get balance error", zap.Error(err))
+		return 0, err
+	}
+	return balance, nil
+}
+
+func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, sum float64) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := `insert into withdrawals(number, sum)  
+       			values($1,$2,$3);`
+	_, err := pgs.db.ExecContext(ctx, query, order, userID, 1, time.Now().UTC()) //1 for NEW
+	return err
+}
+
 func (pgs *storage) UpdateOrder(ctx context.Context, accrual domain.Accrual) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
