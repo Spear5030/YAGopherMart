@@ -223,5 +223,10 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 			orders = append(orders, order)
 		}
 	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return orders, nil
 }

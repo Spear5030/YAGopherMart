@@ -31,6 +31,10 @@ func New(cfg config.Config) (*App, error) {
 		return nil, err
 	}
 	repo, err := storage.New(lg, cfg.Database)
+	if err != nil {
+		lg.Debug(err.Error())
+		return nil, err
+	}
 	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase)
 	r := router.New(h)
