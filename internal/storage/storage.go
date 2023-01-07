@@ -112,7 +112,7 @@ func (pgs *storage) GetBalance(ctx context.Context, userID int) (balance float64
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	query := `select froms users(balance)  
+	query := `select balance from users 
        			where id = $1;`
 	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&balance)
 	if err != nil {
@@ -126,7 +126,7 @@ func (pgs *storage) GetWithdrawn(ctx context.Context, userID int) (withdrawn flo
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	query := `select froms withdrawals(sum)  
+	query := `select sum from withdrawals 
        			where user_id = $1;`
 	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&withdrawn)
 	if err != nil {
@@ -204,11 +204,12 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
        			where o.user_id=$1
 					order by o.uploaded_at;`
 	rows, err := pgs.db.QueryContext(ctx, query, userID)
-	defer rows.Close()
 	if err != nil {
 		pgs.logger.Debug(err.Error())
 		return nil, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var order domain.Order
 		var acc sql.NullFloat64

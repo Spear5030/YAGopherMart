@@ -85,6 +85,7 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 	}
 	if resp.StatusCode == http.StatusOK {
 		b, err := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 		if err != nil {
 			return
 		}
@@ -123,7 +124,13 @@ func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) 
 
 func (uc *usecase) GetBalanceAndWithdrawn(ctx context.Context, userID int) (balance float64, withdrawn float64, err error) {
 	balance, err = uc.storage.GetBalance(ctx, userID)
+	if err != nil {
+		return 0, 0, err
+	}
 	withdrawn, err = uc.storage.GetWithdrawn(ctx, userID)
+	if err != nil {
+		return balance, 0, err
+	}
 	return
 }
 

@@ -16,7 +16,7 @@ import (
 type useCase interface {
 	RegisterUser(ctx context.Context, login string, password string) (int, error)
 	LoginUser(ctx context.Context, login string, password string) (int, error)
-	PostOrder(ctx context.Context, num string, userId int) error
+	PostOrder(ctx context.Context, num string, userID int) error
 	GetOrders(ctx context.Context, userID int) ([]domain.Order, error)
 	GetBalance(ctx context.Context, userID int) (float64, error)
 	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
@@ -141,11 +141,17 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orders, err := h.useCase.GetOrders(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	if len(orders) == 0 {
 		http.Error(w, "No entries", http.StatusNoContent)
 		return
 	}
 	ordersJSON, err := json.Marshal(orders)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersJSON)
@@ -167,6 +173,9 @@ func (h *Handler) GetBalanceAndWithdrawn(w http.ResponseWriter, r *http.Request)
 		Withdrawn float64 `json:"withdrawn"`
 	}{Balance: balance, Withdrawn: withdrawn}
 	ordersJSON, err := json.Marshal(tmp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersJSON)
