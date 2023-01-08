@@ -84,9 +84,10 @@ func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wit
 }
 
 func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
-	resp, err := http.Get(uc.accrualDSN + "/api/orders/" + num)
+	resp, err := http.Get("http://" + uc.accrualDSN + "/api/orders/" + num)
 	if err != nil {
 		uc.logger.Debug("workOrder error", zap.Error(err))
+		return
 	}
 	if resp.StatusCode == http.StatusOK {
 		b, err := io.ReadAll(resp.Body)
@@ -94,8 +95,10 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 		if err != nil {
 			return
 		}
+
 		var acc domain.Accrual
 		if err = json.Unmarshal(b, &acc); err != nil {
+			uc.logger.Debug("workOrder unmarshal error", zap.Error(err))
 			return
 		}
 		err = uc.storage.UpdateOrder(ctx, acc)
@@ -118,6 +121,7 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 				default:
 				}*/
 	} else {
+		uc.logger.Debug("workWithOrder not 200", zap.String("code", resp.Status))
 		//todo 429 retry after
 	}
 	//uc.storage.

@@ -230,6 +230,40 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 
 	return orders, nil
 }
+
+func (pgs *storage) GetOrdersForUpdate(ctx context.Context, n int) ([]string, error) {
+	var orders []string
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	query := `select o.number from orders o
+                join order_status s 
+                    on	o.status=s.id 
+       			where s.status='NEW' or s.status='PROCESSING'
+					order by o.uploaded_at
+						limit $1;`
+	rows, err := pgs.db.QueryContext(ctx, query, n)
+	if err != nil {
+		pgs.logger.Debug(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var order string
+		err = rows.Scan(&order)
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+		} else {
+			orders = append(orders, order)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
 func (pgs *storage) GetWithdrawals(ctx context.Context, userID int) ([]domain.Withdraw, error) {
 	var withdrawals []domain.Withdraw
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
