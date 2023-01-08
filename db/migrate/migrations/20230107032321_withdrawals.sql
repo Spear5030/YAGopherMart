@@ -12,5 +12,6 @@ CREATE TABLE IF NOT EXISTS withdrawals
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE withdrawals;
 SELECT 'down SQL query';
 -- +goose StatementEnd
