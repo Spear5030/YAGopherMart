@@ -19,6 +19,9 @@ func Migrate(dsn string, path fs.FS) error {
 	}
 	defer db.Close()
 	goose.SetBaseFS(path)
-	goose.Down(db, "migrations")
+	err = goose.Down(db, "migrations")
+	if err != nil {
+		return err
+	}
 	return goose.Up(db, "migrations")
 }

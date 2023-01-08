@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users
 -- +goose StatementEnd
 
 -- +goose Down
-DROP TABLE users cascade;
+DROP TABLE if exists users cascade;
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
