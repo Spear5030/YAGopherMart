@@ -21,6 +21,7 @@ type useCase interface {
 	GetBalance(ctx context.Context, userID int) (float64, error)
 	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
 	GetBalanceAndWithdrawn(ctx context.Context, userID int) (balance float64, withdrawn float64, err error)
+	GetWithdrawals(ctx context.Context, userID int) ([]domain.Withdraw, error)
 }
 
 type Handler struct {
@@ -155,6 +156,23 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersJSON)
+}
+
+func (h *Handler) GetWithdrawals(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r.Context())
+	if err != nil {
+		h.logger.Debug("Error with JWT token", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	withdrawals, err := h.useCase.GetWithdrawals(r.Context(), userID)
+	withdrawalsJSON, err := json.Marshal(withdrawals)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(withdrawalsJSON)
 }
 
 func (h *Handler) GetBalanceAndWithdrawn(w http.ResponseWriter, r *http.Request) {

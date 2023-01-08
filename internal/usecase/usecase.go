@@ -21,6 +21,7 @@ type storager interface {
 	GetBalance(ctx context.Context, userID int) (float64, error)
 	GetWithdrawn(ctx context.Context, userID int) (float64, error)
 	PostWithdraw(ctx context.Context, userID int, order string, sum float64) error
+	GetWithdrawals(ctx context.Context, userID int) ([]domain.Withdraw, error)
 }
 
 type usecase struct {
@@ -76,6 +77,10 @@ func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error 
 
 func (uc *usecase) GetOrders(ctx context.Context, userID int) ([]domain.Order, error) {
 	return uc.storage.GetOrders(ctx, userID)
+}
+
+func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Withdraw, error) {
+	return uc.storage.GetWithdrawals(ctx, userID)
 }
 
 func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {

@@ -25,6 +25,7 @@ func New(h *handler.Handler) http.Handler {
 		r.Get("/api/user/orders", h.GetOrders)
 		r.Get("/api/user/balance", h.GetBalanceAndWithdrawn)
 		r.Post("/api/user/balance/withdraw", h.PostWithdraw)
+		r.Get("/api/user/withdrawals", h.GetWithdrawals)
 
 	})
 	//	r.Use(middleware.SetHeader("Content-Type", "application/json"))

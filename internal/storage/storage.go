@@ -230,3 +230,32 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 
 	return orders, nil
 }
+func (pgs *storage) GetWithdrawals(ctx context.Context, userID int) ([]domain.Withdraw, error) {
+	var withdrawals []domain.Withdraw
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	query := `select number, sum, proccesed_at from withdrawals  
+       			where user_id=$1
+					order by proccesed_at;`
+	rows, err := pgs.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		pgs.logger.Debug(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var withdrawal domain.Withdraw
+		err = rows.Scan(&withdrawal.Order, &withdrawal.Sum, &withdrawal.ProcessedAt)
+		if err != nil {
+			pgs.logger.Debug(err.Error())
+		} else {
+			withdrawals = append(withdrawals, withdrawal)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return withdrawals, nil
+}
