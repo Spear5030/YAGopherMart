@@ -26,6 +26,7 @@ func New(cfg config.Config) (*App, error) {
 
 	lg, err := logger.New(true)
 	if err != nil {
+		lg.Debug(err.Error())
 		return nil, err
 	}
 	err = migrate.Migrate(cfg.Database, migrate.Migrations)
