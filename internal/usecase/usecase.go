@@ -71,7 +71,7 @@ func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error 
 	if err != nil {
 		return err
 	}
-	time.AfterFunc(500*time.Millisecond, func() { uc.WorkWithOrder(ctx, num) })
+	//time.AfterFunc(500*time.Millisecond, func() { uc.WorkWithOrder(ctx, num) })
 	return nil
 }
 
@@ -84,7 +84,7 @@ func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wit
 }
 
 func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
-	resp, err := http.Get("http://" + uc.accrualDSN + "/api/orders/" + num)
+	resp, err := http.Get(uc.accrualDSN + "/api/orders/" + num)
 	if err != nil {
 		uc.logger.Debug("workOrder error", zap.Error(err))
 		return

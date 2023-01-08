@@ -46,6 +46,7 @@ func New(cfg config.Config) (*App, error) {
 	n := 10
 	workersCount := 5
 	c := make(chan string, n)
+	quit := make(chan bool)
 	ctx := context.Background()
 	go func() {
 		for {
@@ -61,6 +62,8 @@ func New(cfg config.Config) (*App, error) {
 				}
 				fmt.Println(orders)
 				//lg.Debug("timer", zap.Array("orders", ))
+			case <-quit:
+				return
 			}
 		}
 	}()

@@ -166,6 +166,9 @@ func (h *Handler) GetWithdrawals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	withdrawals, err := h.useCase.GetWithdrawals(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	withdrawalsJSON, err := json.Marshal(withdrawals)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
