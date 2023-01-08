@@ -14,27 +14,24 @@ func New(h *handler.Handler) http.Handler {
 	//r.Use(handler.CheckCookies(h.SecretKey))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
-	//r.Use(handler.DecompressGZRequest)
 	r.Use(jwtauth.Verifier(h.JWT))
-	r.Post("/api/user/register", h.RegisterUser)
-	r.Post("/api/user/login", h.LoginUser)
-	//
+	r.Use(handler.DecompressGZRequest)
+	r.Group(func(r chi.Router) {
+		r.Post("/api/user/register", h.RegisterUser)
+		r.Post("/api/user/login", h.LoginUser)
+	})
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Authenticator)
 		r.Post("/api/user/orders", h.PostOrder)
 		r.Post("/api/user/balance/withdraw", h.PostWithdraw)
-
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Authenticator)
 		r.Use(middleware.SetHeader("Content-Type", "application/json"))
 		r.Get("/api/user/orders", h.GetOrders)
 		r.Get("/api/user/balance", h.GetBalanceAndWithdrawn)
 		r.Get("/api/user/withdrawals", h.GetWithdrawals)
 	})
-
-	//	r.Post("/api/shorten", h.PostJSON)
-	//	r.Get("/api/user/urls", h.GetURLsByUser)
-	//	r.Delete("/api/user/urls", h.DeleteBatchByUser)
-	//	r.Post("/api/shorten/batch", h.PostBatch)
-	//})
 
 	return r
 }
