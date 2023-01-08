@@ -11,6 +11,7 @@ import (
 	"github.com/Spear5030/YAGopherMart/internal/usecase"
 	"github.com/Spear5030/YAGopherMart/pkg/logger"
 	"go.uber.org/zap"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -23,17 +24,19 @@ type App struct {
 }
 
 func New(cfg config.Config) (*App, error) {
-
+	log.Print("new")
 	lg, err := logger.New(true)
 	if err != nil {
 		lg.Debug(err.Error())
 		return nil, err
 	}
+	lg.Debug("will migrate")
 	err = migrate.Migrate(cfg.Database, migrate.Migrations)
 	if err != nil {
 		lg.Debug(err.Error())
 		return nil, err
 	}
+	lg.Debug("migrated")
 	repo, err := storage.New(lg, cfg.Database)
 	if err != nil {
 		lg.Debug(err.Error())
@@ -88,6 +91,7 @@ func New(cfg config.Config) (*App, error) {
 }
 
 func (app *App) Run() error {
+	log.Print("app run")
 	rand.Seed(time.Now().UnixNano())
 	return app.HTTPServer.ListenAndServe()
 }
