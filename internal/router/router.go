@@ -22,13 +22,14 @@ func New(h *handler.Handler) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Authenticator)
 		r.Post("/api/user/orders", h.PostOrder)
+		r.Post("/api/user/balance/withdraw", h.PostWithdraw)
+
+		r.Use(middleware.SetHeader("Content-Type", "application/json"))
 		r.Get("/api/user/orders", h.GetOrders)
 		r.Get("/api/user/balance", h.GetBalanceAndWithdrawn)
-		r.Post("/api/user/balance/withdraw", h.PostWithdraw)
 		r.Get("/api/user/withdrawals", h.GetWithdrawals)
-
 	})
-	//	r.Use(middleware.SetHeader("Content-Type", "application/json"))
+
 	//	r.Post("/api/shorten", h.PostJSON)
 	//	r.Get("/api/user/urls", h.GetURLsByUser)
 	//	r.Delete("/api/user/urls", h.DeleteBatchByUser)
