@@ -17,14 +17,10 @@ func Migrate(dsn string, path fs.FS) error {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Print(err)
-		return err
+		//return err
 	}
 	defer db.Close()
 	goose.SetBaseFS(path)
-	/*	err = goose.Down(db, "migrations")
-		if err != nil {
-			log.Print(err)
-			return err
-		}*/
+
 	return goose.Up(db, "migrations")
 }
