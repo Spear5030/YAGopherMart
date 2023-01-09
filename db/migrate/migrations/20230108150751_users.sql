@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users
 -- +goose StatementEnd
 
 -- +goose Down
--- DROP TABLE users;
+DROP TABLE users;
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
