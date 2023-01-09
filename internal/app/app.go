@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/Spear5030/YAGopherMart/db/migrate"
 	"github.com/Spear5030/YAGopherMart/internal/config"
 	"github.com/Spear5030/YAGopherMart/internal/handler"
 	"github.com/Spear5030/YAGopherMart/internal/router"
@@ -30,11 +31,11 @@ func New(cfg config.Config) (*App, error) {
 		return nil, err
 	}
 	lg.Debug("will migrate")
-	/*	err = migrate.Migrate(cfg.Database, migrate.Migrations)
-		if err != nil {
-			lg.Debug(err.Error())
-			return nil, err
-		}*/
+	err = migrate.Migrate(cfg.Database, migrate.Migrations)
+	if err != nil {
+		lg.Debug(err.Error())
+		return nil, err
+	}
 	lg.Debug("migrated")
 	repo, err := storage.New(lg, cfg.Database)
 	if err != nil {
