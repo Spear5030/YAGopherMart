@@ -146,7 +146,7 @@ func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, 
 
 	query := `update users set  balance = balance - $1
              		from orders o 
-				where id= o.user_id and o.number=$2
+				where id= o.user_id
 			returning balance;`
 	res := pgs.db.QueryRowContext(ctx, query, sum, order)
 	var b float64
