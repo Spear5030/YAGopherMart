@@ -148,7 +148,7 @@ func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, 
              		from orders o 
 				where id= o.user_id
 			returning balance;`
-	res := pgs.db.QueryRowContext(ctx, query, sum, order)
+	res := pgs.db.QueryRowContext(ctx, query, sum)
 	var b float64
 	err := res.Scan(&b)
 	pgs.logger.Debug("Post returning balance", zap.Float64("b", b))
