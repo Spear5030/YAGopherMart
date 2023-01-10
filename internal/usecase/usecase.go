@@ -133,6 +133,7 @@ func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) 
 
 func (uc *usecase) GetBalanceAndWithdrawn(ctx context.Context, userID int) (balance float64, withdrawn float64, err error) {
 	balance, err = uc.storage.GetBalance(ctx, userID)
+	uc.logger.Debug("uc get balance", zap.Float64("balance", balance))
 	if err != nil {
 		return 0, 0, err
 	}
