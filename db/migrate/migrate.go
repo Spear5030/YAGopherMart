@@ -21,11 +21,11 @@ func Migrate(dsn string, path fs.FS) error {
 	}
 	defer db.Close()
 	//goose.SetBaseFS(path)
-	_, err = db.Exec("drop table goose_db_version;") //burn goose
-	if err != nil {
-		log.Print(err)
-		return err
-	}
+	//_, err = db.Exec("drop table goose_db_version;") //burn goose
+	//if err != nil {
+	//	log.Print(err)
+	//	return err
+	//}
 	//fmt.Println(goose.Status(db, "migrations"))
 	//fmt.Println(goose.Reset(db, "migrations"))
 	return nil
