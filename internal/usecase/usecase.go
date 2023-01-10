@@ -152,6 +152,8 @@ func (uc *usecase) PostWithdraw(ctx context.Context, userID int, order string, s
 	if balance < sum {
 		return domain.ErrInsufficientBalance
 	}
+	uc.logger.Debug("uc post balance", zap.Float64("balance", balance))
+	uc.logger.Debug("uc post sum", zap.Float64("sum", sum))
 	return uc.storage.PostWithdraw(ctx, userID, order, sum)
 }
 

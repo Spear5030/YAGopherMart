@@ -187,7 +187,6 @@ func (h *Handler) GetBalanceAndWithdrawn(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	balance, withdrawn, err := h.useCase.GetBalanceAndWithdrawn(r.Context(), userID)
-	h.logger.Debug("storage get balance", zap.Float64("balance", balance))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

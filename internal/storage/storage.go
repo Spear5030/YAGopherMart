@@ -115,7 +115,6 @@ func (pgs *storage) GetBalance(ctx context.Context, userID int) (balance float64
 	query := `select balance from users 
        			where id = $1;`
 	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&balance)
-	pgs.logger.Debug("storage get balance", zap.Float64("balance", balance))
 	if err != nil {
 		pgs.logger.Debug("get balance error", zap.Error(err))
 		return 0, err
