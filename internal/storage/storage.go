@@ -146,12 +146,17 @@ func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, 
 
 	query := `update users set  balance = balance - $1
              		from orders o 
-				where id= o.user_id and o.number=$2;`
-	_, err := pgs.db.ExecContext(ctx, query, sum, order)
+				where id= o.user_id and o.number=$2
+			returning balance;`
+	res := pgs.db.QueryRowContext(ctx, query, sum, order)
+	var b float64
+	err := res.Scan(&b)
+	pgs.logger.Debug("Post returning balance", zap.Float64("b", b))
 	if err != nil {
 		pgs.logger.Debug(err.Error())
 		return err
 	}
+
 	query = `insert into withdrawals(number,user_id, sum)  
        			values($1,$2,$3);`
 	_, err = pgs.db.ExecContext(ctx, query, order, userID, sum)
