@@ -30,6 +30,12 @@ func New(cfg config.Config) (*App, error) {
 		lg.Debug(err.Error())
 		return nil, err
 	}
+	repo, err := storage.New(lg, cfg.Database)
+	if err != nil {
+		lg.Debug(err.Error())
+		return nil, err
+	}
+	lg.Debug("drop goose", zap.Error(repo.DropGoose()))
 	lg.Debug("will migrate")
 	err = migrate.Migrate(cfg.Database, migrate.Migrations)
 	if err != nil {
@@ -37,11 +43,7 @@ func New(cfg config.Config) (*App, error) {
 		return nil, err
 	}
 	lg.Debug("migrated")
-	repo, err := storage.New(lg, cfg.Database)
-	if err != nil {
-		lg.Debug(err.Error())
-		return nil, err
-	}
+
 	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase)
 	r := router.New(h)

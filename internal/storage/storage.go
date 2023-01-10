@@ -293,3 +293,8 @@ func (pgs *storage) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wi
 	}
 	return withdrawals, nil
 }
+
+func (pgs *storage) DropGoose() error {
+	_, err := pgs.db.Exec("drop table goose_db_version;")
+	return err
+}
