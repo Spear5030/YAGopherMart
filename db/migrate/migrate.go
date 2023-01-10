@@ -3,6 +3,7 @@ package migrate
 import (
 	"database/sql"
 	"embed"
+	"fmt"
 	"github.com/pressly/goose/v3"
 	"io/fs"
 	"log"
@@ -20,8 +21,9 @@ func Migrate(dsn string, path fs.FS) error {
 		return err
 	}
 	defer db.Close()
-
 	goose.SetBaseFS(path)
-
-	return goose.Up(db, "migrations", goose.WithAllowMissing())
+	fmt.Println(goose.Status(db, "migrations"))
+	fmt.Println(goose.Reset(db, "migrations"))
+	return nil
+	//return goose.Up(db, "migrations", goose.WithAllowMissing())
 }
