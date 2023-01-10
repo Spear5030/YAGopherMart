@@ -192,7 +192,7 @@ func (h *Handler) GetBalanceAndWithdrawn(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	tmp := struct {
-		Balance   float64 `json:"balance"`
+		Balance   float64 `json:"current"`
 		Withdrawn float64 `json:"withdrawn"`
 	}{Balance: balance, Withdrawn: withdrawn}
 	ordersJSON, err := json.Marshal(tmp)
