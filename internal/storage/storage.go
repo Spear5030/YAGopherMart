@@ -130,6 +130,9 @@ func (pgs *storage) GetWithdrawn(ctx context.Context, userID int) (withdrawn flo
        			where user_id = $1;`
 	err = pgs.db.QueryRowContext(ctx, query, userID).Scan(&withdrawn)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
 		pgs.logger.Debug("get withdrawn error", zap.Error(err))
 		return 0, err
 	}

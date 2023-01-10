@@ -24,7 +24,6 @@ type App struct {
 }
 
 func New(cfg config.Config) (*App, error) {
-	log.Print("new")
 	lg, err := logger.New(true)
 	if err != nil {
 		lg.Debug(err.Error())
@@ -35,14 +34,13 @@ func New(cfg config.Config) (*App, error) {
 		lg.Debug(err.Error())
 		return nil, err
 	}
-	lg.Debug("drop goose", zap.Error(repo.DropGoose()))
-	lg.Debug("will migrate")
+	//lg.Debug("drop goose", zap.Error(repo.DropGoose()))
+
 	err = migrate.Migrate(cfg.Database, migrate.Migrations)
 	if err != nil {
 		lg.Debug(err.Error())
 		return nil, err
 	}
-	lg.Debug("migrated")
 
 	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase)
