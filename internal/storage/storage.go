@@ -145,16 +145,19 @@ func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	tx, err := pgs.db.Begin()
+	defer tx.Rollback()
 	if err != nil {
 		pgs.logger.Debug("update TX error" + err.Error())
 		return err
 	}
-	defer tx.Rollback()
 
 	query := `insert into withdrawals(number,user_id, sum)  
        			values($1,$2,$3);`
 	_, err = pgs.db.ExecContext(ctx, query, order, userID, sum)
-	return err
+	if err != nil {
+		pgs.logger.Debug("update TX error" + err.Error())
+		return err
+	}
 	query = `update users set  balance = balance - $1
              		from orders o 
 				where id= o.user_id and o.number=$2;`
