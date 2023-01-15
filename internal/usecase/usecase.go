@@ -47,8 +47,6 @@ func (uc *usecase) RegisterUser(ctx context.Context, login string, password stri
 	if err != nil {
 		return 0, err
 	}
-
-	//return genToken(id)
 	return id, nil
 }
 
@@ -62,7 +60,6 @@ func (uc *usecase) LoginUser(ctx context.Context, login string, password string)
 	if err != nil {
 		return 0, domain.ErrInvalidPassword
 	}
-	//return genToken(id)
 	return id, nil
 }
 
@@ -84,6 +81,7 @@ func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wit
 }
 
 func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
+	//context.WithCancel(ctx)
 	resp, err := http.Get(uc.accrualDSN + "/api/orders/" + num)
 	if err != nil {
 		uc.logger.Debug("workOrder error", zap.Error(err))
@@ -106,25 +104,14 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
 			uc.logger.Debug("workOrder update error", zap.Error(err))
 			return
 		}
-		/*		switch acc.Status {
-				case "PROCESSED":
-					uc.storage.UpdateOrder(ctx,acc)
-					//uc.storage.SetAccrual(ctx, acc.Order, acc.Accrual) // change status
-					//uc.storage.UpdateOrder(ctx, acc)
-				case "REGISTERED": //new
-					uc.storage.UpdateOrder(ctx,acc)
-					//uc.storage.MvTask(ctx, acc.Order) //change status
-				case "PROCESSING":
-					//uc.storage.MvTask(ctx, acc.Order)
-				case "INVALID":
-					//uc.storage.RmTask(ctx, acc.Order)
-				default:
-				}*/
 	} else {
 		uc.logger.Debug("workWithOrder not 200", zap.String("code", resp.Status))
+		if resp.StatusCode == http.StatusTooManyRequests {
+			ctx.Done()
+		}
 		//todo 429 retry after
 	}
-	//uc.storage.
+
 }
 
 func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) {

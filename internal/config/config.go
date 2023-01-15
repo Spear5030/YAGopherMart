@@ -10,7 +10,7 @@ type Config struct {
 	//Database string `env:"DATABASE_URI"`
 	Database string `env:"DATABASE_URI" envDefault:"host=localhost port=5432 user=postgres password=password TimeZone=UTC"`
 	Key      string `env:"COOKIES_KEY" envDefault:"V3ry$trongK3y"`
-	Accrual  string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:"localhost:8081"`
+	Accrual  string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:"http://localhost:8081"`
 }
 
 var cfg Config

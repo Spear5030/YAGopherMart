@@ -20,7 +20,7 @@ import (
 type App struct {
 	HTTPServer *http.Server
 	logger     *zap.Logger
-	timeout    *time.Ticker
+	ticker     *time.Ticker
 }
 
 func New(cfg config.Config) (*App, error) {
@@ -34,8 +34,6 @@ func New(cfg config.Config) (*App, error) {
 		lg.Debug(err.Error())
 		return nil, err
 	}
-	//lg.Debug("drop goose", zap.Error(repo.DropGoose()))
-
 	err = migrate.Migrate(cfg.Database, migrate.Migrations)
 	if err != nil {
 		lg.Debug(err.Error())
@@ -46,18 +44,20 @@ func New(cfg config.Config) (*App, error) {
 	h := handler.New(lg, useCase)
 	r := router.New(h)
 
-	t := time.NewTicker(1 * time.Second * 10)
-	n := 10
+	t := time.NewTicker(1 * time.Second * 3)
+	n := 5
 	workersCount := 5
 	c := make(chan string, n)
 	quit := make(chan bool)
 	ctx := context.Background()
+	ctxWithCancel, cancel := context.WithCancel(ctx)
 	go func() {
 		for {
 			select {
+			case <-ctxWithCancel.Done():
+				cancel()
 			case <-t.C:
-				lg.Debug("Ticker start")
-				orders, err := repo.GetOrdersForUpdate(context.Background(), n)
+				orders, err := repo.GetOrdersForUpdate(ctx, n)
 				if err != nil {
 					lg.Debug(err.Error())
 				}
@@ -75,7 +75,7 @@ func New(cfg config.Config) (*App, error) {
 		go func() {
 			for order := range c {
 				lg.Debug("Worker starts work with order ", zap.String("order", order))
-				useCase.WorkWithOrder(ctx, order)
+				useCase.WorkWithOrder(ctxWithCancel, order)
 			}
 		}()
 	}
@@ -86,7 +86,7 @@ func New(cfg config.Config) (*App, error) {
 	}
 	return &App{
 		HTTPServer: srv,
-		timeout:    t,
+		ticker:     t,
 	}, nil
 }
 
@@ -95,22 +95,3 @@ func (app *App) Run() error {
 	rand.Seed(time.Now().UnixNano())
 	return app.HTTPServer.ListenAndServe()
 }
-
-//func (app *App) startWorkers() {
-//for {
-//	select {
-//	case <-app.timeout.C:
-//		repo
-//elapsed := time.Since(wallclock)
-//case <-app.ping:
-// do nothing & let the loop iterate
-// OR
-//	app.timeout.Stop()
-//	app.timeout = time.NewTicker(1 * time.Minute)
-//case <-app.stop:
-//	return
-//		}
-//	}
-//}
-
-//func (app *App)

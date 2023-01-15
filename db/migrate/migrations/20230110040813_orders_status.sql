@@ -1,6 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 SELECT 'up SQL query';
+DROP TABLE order_status cascade;
 CREATE TABLE IF NOT EXISTS order_status
 (   id integer primary key,
     status varchar(10)
