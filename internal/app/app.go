@@ -41,22 +41,24 @@ func New(cfg config.Config) (*App, error) {
 	}
 
 	useCase := usecase.New(lg, repo, cfg.Accrual)
-	h := handler.New(lg, useCase)
+	h := handler.New(lg, useCase, cfg.Key)
 	r := router.New(h)
 
-	t := time.NewTicker(1 * time.Second * 3)
-	n := 5
+	t := time.NewTicker(1 * time.Second * 60)
+	n := 100
 	workersCount := 5
 	c := make(chan string, n)
 	quit := make(chan bool)
 	ctx := context.Background()
-	ctxWithCancel, cancel := context.WithCancel(ctx)
+	nop := false //boolean for nop if 429(retry)
 	go func() {
+
 		for {
 			select {
-			case <-ctxWithCancel.Done():
-				cancel()
+			case <-ctx.Done():
+				lg.Debug("Context cancelled")
 			case <-t.C:
+				nop = false
 				orders, err := repo.GetOrdersForUpdate(ctx, n)
 				if err != nil {
 					lg.Debug(err.Error())
@@ -68,14 +70,21 @@ func New(cfg config.Config) (*App, error) {
 				//lg.Debug("timer", zap.Array("orders", ))
 			case <-quit:
 				return
+				// case ch with sleep
 			}
 		}
 	}()
 	for i := 0; i < workersCount; i++ {
 		go func() {
 			for order := range c {
-				lg.Debug("Worker starts work with order ", zap.String("order", order))
-				useCase.WorkWithOrder(ctxWithCancel, order)
+				if !nop {
+					lg.Debug("Worker starts work with order ", zap.String("order", order))
+					err = useCase.WorkWithOrder(ctx, order)
+					if err != nil {
+						nop = true
+					}
+				}
+				// 429 error or some.
 			}
 		}()
 	}

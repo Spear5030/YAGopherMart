@@ -68,7 +68,6 @@ func (uc *usecase) PostOrder(ctx context.Context, num string, userID int) error 
 	if err != nil {
 		return err
 	}
-	//time.AfterFunc(500*time.Millisecond, func() { uc.WorkWithOrder(ctx, num) })
 	return nil
 }
 
@@ -80,38 +79,41 @@ func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wit
 	return uc.storage.GetWithdrawals(ctx, userID)
 }
 
-func (uc *usecase) WorkWithOrder(ctx context.Context, num string) {
+func (uc *usecase) WorkWithOrder(ctx context.Context, num string) error {
 	//context.WithCancel(ctx)
 	resp, err := http.Get(uc.accrualDSN + "/api/orders/" + num)
+	// http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com", nil)
+	//http.DefaultClient.Do() //todo get with context
 	if err != nil {
 		uc.logger.Debug("workOrder error", zap.Error(err))
-		return
+		return err
 	}
 	if resp.StatusCode == http.StatusOK {
 		b, err := io.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		if err != nil {
-			return
+			return err
 		}
 
 		var acc domain.Accrual
 		if err = json.Unmarshal(b, &acc); err != nil {
 			uc.logger.Debug("workOrder unmarshal error", zap.Error(err))
-			return
+			return err
 		}
 		err = uc.storage.UpdateOrder(ctx, acc)
 		if err != nil {
 			uc.logger.Debug("workOrder update error", zap.Error(err))
-			return
+			return err
 		}
 	} else {
 		uc.logger.Debug("workWithOrder not 200", zap.String("code", resp.Status))
 		if resp.StatusCode == http.StatusTooManyRequests {
 			ctx.Done()
 		}
+		return nil
 		//todo 429 retry after
 	}
-
+	return nil
 }
 
 func (uc *usecase) GetBalance(ctx context.Context, userID int) (float64, error) {

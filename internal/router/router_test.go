@@ -38,7 +38,7 @@ func TestRouter(t *testing.T) {
 	require.NoError(t, err)
 	useCase := usecase.New(lg, repo, cfg.Accrual)
 	require.NoError(t, err)
-	h := handler.New(lg, useCase)
+	h := handler.New(lg, useCase, cfg.Key)
 	r := New(h)
 	ts := httptest.NewServer(r)
 	defer ts.Close()

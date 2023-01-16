@@ -31,8 +31,8 @@ type Handler struct {
 	JWT     *jwtauth.JWTAuth
 }
 
-func New(logger *zap.Logger, useCase useCase) *Handler {
-	tokenAuth := jwtauth.New("HS256", []byte("SecretKey"), nil) //TODO Config
+func New(logger *zap.Logger, useCase useCase, key string) *Handler {
+	tokenAuth := jwtauth.New("HS256", []byte(key), nil)
 	return &Handler{
 		logger:  logger,
 		useCase: useCase,
