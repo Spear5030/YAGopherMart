@@ -44,7 +44,7 @@ func New(cfg config.Config) (*App, error) {
 	h := handler.New(lg, useCase, cfg.Key)
 	r := router.New(h)
 
-	t := time.NewTicker(1 * time.Second * 60)
+	t := time.NewTicker(1 * time.Second * 5)
 	n := 100
 	workersCount := 5
 	c := make(chan string, n)
@@ -52,7 +52,6 @@ func New(cfg config.Config) (*App, error) {
 	ctx := context.Background()
 	nop := false //boolean for nop if 429(retry)
 	go func() {
-
 		for {
 			select {
 			case <-ctx.Done():
@@ -77,13 +76,14 @@ func New(cfg config.Config) (*App, error) {
 	for i := 0; i < workersCount; i++ {
 		go func() {
 			for order := range c {
-				if !nop {
+				if nop == false {
 					lg.Debug("Worker starts work with order ", zap.String("order", order))
 					err = useCase.WorkWithOrder(ctx, order)
 					if err != nil {
 						nop = true
 					}
 				}
+				lg.Debug("Have nop - wont work")
 				// 429 error or some.
 			}
 		}()

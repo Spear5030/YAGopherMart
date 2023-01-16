@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/Spear5030/YAGopherMart/domain"
 	"github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
@@ -108,10 +109,9 @@ func (uc *usecase) WorkWithOrder(ctx context.Context, num string) error {
 	} else {
 		uc.logger.Debug("workWithOrder not 200", zap.String("code", resp.Status))
 		if resp.StatusCode == http.StatusTooManyRequests {
-			ctx.Done()
+			return errors.New("429 retry") //todo new error in domain
 		}
-		return nil
-		//todo 429 retry after
+		return errors.New("some error. won't work with order")
 	}
 	return nil
 }
