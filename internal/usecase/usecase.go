@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type storager interface {
+type Storager interface {
 	RegisterUser(ctx context.Context, login string, hash string) (int, error)
 	GetUserHash(ctx context.Context, login string) (int, string, error)
 	PostOrder(ctx context.Context, num string, userID int) error
@@ -27,11 +27,11 @@ type storager interface {
 
 type usecase struct {
 	logger     *zap.Logger
-	storage    storager
+	storage    Storager
 	accrualDSN string
 }
 
-func New(logger *zap.Logger, storage storager, accDSN string) *usecase {
+func New(logger *zap.Logger, storage Storager, accDSN string) *usecase {
 	return &usecase{
 		logger:     logger,
 		storage:    storage,
@@ -152,7 +152,7 @@ func genToken(id int) (string, error) {
 			"ID":        id,
 			"ExpiresAt": jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // TODO Config?
 		})
-	tokenString, err := token.SignedString([]byte("hmacSampleSecret")) //TODO Config
+	tokenString, err := token.SignedString([]byte("hmacSampleSecret"))
 	if err != nil {
 		return "", err
 	}

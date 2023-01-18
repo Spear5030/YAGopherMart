@@ -140,7 +140,6 @@ func (pgs *storage) GetWithdrawn(ctx context.Context, userID int) (withdrawn flo
 }
 
 func (pgs *storage) PostWithdraw(ctx context.Context, userID int, order string, sum float64) error {
-	//TODO подумать нужна ли транзакция
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -188,7 +187,6 @@ func (pgs *storage) UpdateOrder(ctx context.Context, accrual domain.Accrual) err
 			pgs.logger.Debug(err.Error())
 			return err
 		}
-		// some strange with balance. check default 0
 		query = `update users set  balance = balance + $1
              		from orders o 
 				where id= o.user_id and o.number=$2;`

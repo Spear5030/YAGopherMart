@@ -44,18 +44,18 @@ func New(cfg config.Config) (*App, error) {
 	h := handler.New(lg, useCase, cfg.Key)
 	r := router.New(h)
 
-	t := time.NewTicker(1 * time.Second * 5)
 	n := 100
 	workersCount := 5
 	c := make(chan string, n)
-	quit := make(chan bool)
 	ctx := context.Background()
 	nop := false //boolean for nop if 429(retry)
+	t := time.NewTicker(1 * time.Second * 5)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				lg.Debug("Context cancelled")
+				return
 			case <-t.C:
 				nop = false
 				orders, err := repo.GetOrdersForUpdate(ctx, n)
@@ -67,8 +67,6 @@ func New(cfg config.Config) (*App, error) {
 				}
 				fmt.Println(orders)
 				//lg.Debug("timer", zap.Array("orders", ))
-			case <-quit:
-				return
 				// case ch with sleep
 			}
 		}
@@ -76,7 +74,7 @@ func New(cfg config.Config) (*App, error) {
 	for i := 0; i < workersCount; i++ {
 		go func() {
 			for order := range c {
-				if nop == false {
+				if !nop {
 					lg.Debug("Worker starts work with order ", zap.String("order", order))
 					err = useCase.WorkWithOrder(ctx, order)
 					if err != nil {
