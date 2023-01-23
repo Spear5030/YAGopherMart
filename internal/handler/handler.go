@@ -67,6 +67,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		"ExpiredAt": time.Now().Add(time.Hour * 24),
 	})
 	if err != nil {
+		h.logger.Debug("token encode", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
