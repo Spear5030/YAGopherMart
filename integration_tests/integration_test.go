@@ -1,4 +1,4 @@
-package integration_tests
+package integrationTests
 
 import (
 	"bytes"
@@ -90,6 +90,7 @@ func (s *TestSuite) TestRegisterUser() {
 	r, err = http.NewRequest(http.MethodPost, s.server.URL+"/api/user/register", b)
 	s.Require().NoError(err)
 	resp, err = s.server.Client().Do(r)
+	defer resp.Body.Close()
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusConflict, resp.StatusCode)
 }
@@ -100,6 +101,8 @@ func (s *TestSuite) TestPostOrder() {
 	r, err := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/register", b)
 	s.Require().NoError(err)
 	resp, err := s.server.Client().Do(r)
+	s.Require().NoError(err)
+	defer resp.Body.Close()
 	auth := resp.Header.Get("Authorization")
 
 	b = bytes.NewBufferString("12345678903")
@@ -129,6 +132,7 @@ func (s *TestSuite) TestPostOrder() {
 	r.Header.Add("Authorization", auth)
 
 	resp, err = s.server.Client().Do(r)
+	defer resp.Body.Close()
 	s.Require().NoError(err)
 
 	s.Require().Equal(http.StatusOK, resp.StatusCode)
@@ -139,6 +143,7 @@ func (s *TestSuite) TestPostOrder() {
 	r.Header.Add("Authorization", auth)
 
 	resp, err = s.server.Client().Do(r)
+	defer resp.Body.Close()
 	s.Require().NoError(err)
 
 	s.Require().Equal(http.StatusUnprocessableEntity, resp.StatusCode)
