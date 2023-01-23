@@ -3,15 +3,11 @@ package integrationtests
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/Spear5030/YAGopherMart/internal/app"
 	"github.com/Spear5030/YAGopherMart/internal/config"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/Spear5030/YAGopherMart/testutils/fixtureloader"
+	"github.com/Spear5030/YAGopherMart/testutils/testcontainer"
 
-	//"github.com/underbek/integration-test-the-best/testutils/testcontainer"
-	// при подключении ловил панику sql: Register called twice for driver pgx
 	"net/http"
 
 	"testing"
@@ -25,52 +21,8 @@ type TestSuite struct {
 	suite.Suite
 	app               *app.App
 	server            *httptest.Server
-	postgresContainer *TestDatabase
-	//fixtures  *testutils.FixtureLoader
-}
-
-type TestDatabase struct {
-	instance testcontainers.Container
-}
-
-func NewTestDatabase() *TestDatabase {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:12",
-		ExposedPorts: []string{"5432/tcp"},
-		AutoRemove:   true,
-		Env: map[string]string{
-			"POSTGRES_USER":     "postgres",
-			"POSTGRES_PASSWORD": "postgres",
-			"POSTGRES_DB":       "postgres",
-		},
-		WaitingFor: wait.ForListeningPort("5432/tcp"),
-	}
-	postgres, _ := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	return &TestDatabase{
-		instance: postgres,
-	}
-}
-
-func (db *TestDatabase) Port() int {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	p, _ := db.instance.MappedPort(ctx, "5432")
-	return p.Int()
-}
-
-func (db *TestDatabase) ConnectionString() string {
-	return fmt.Sprintf("postgres://postgres:postgres@127.0.0.1:%d/postgres", db.Port())
-}
-
-func (db *TestDatabase) Close(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	require.NoError(t, db.instance.Terminate(ctx))
+	postgresContainer *testcontainer.PostgresContainer
+	fixtures          *fixtureloader.Loader
 }
 
 func (s *TestSuite) TestRegisterUser() {
@@ -151,16 +103,16 @@ func (s *TestSuite) TestPostOrder() {
 }
 
 func (s *TestSuite) SetupSuite() {
-	_, ctxCancel := context.WithTimeout(context.Background(), 300*time.Second)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer ctxCancel()
 
 	var err error
 
-	s.postgresContainer = NewTestDatabase()
+	s.postgresContainer, err = testcontainer.NewPostgresContainer(ctx)
 
 	s.app, err = app.New(
 		config.Config{
-			Database: s.postgresContainer.ConnectionString(),
+			Database: s.postgresContainer.GetDSN(),
 			Key:      "P4SSW0RD",
 		})
 	s.Require().NoError(err)
@@ -172,6 +124,8 @@ func TestSuite_PostgreSQLStorage(t *testing.T) {
 }
 
 func (s *TestSuite) TearDownSuite() {
-	_, ctxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer ctxCancel()
+
+	s.Require().NoError(s.postgresContainer.Terminate(ctx))
 }
