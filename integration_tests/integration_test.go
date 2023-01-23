@@ -90,8 +90,9 @@ func (s *TestSuite) TestRegisterUser() {
 	r, err = http.NewRequest(http.MethodPost, s.server.URL+"/api/user/register", b)
 	s.Require().NoError(err)
 	resp, err = s.server.Client().Do(r)
-	defer resp.Body.Close()
 	s.Require().NoError(err)
+	defer resp.Body.Close()
+
 	s.Require().Equal(http.StatusConflict, resp.StatusCode)
 }
 
@@ -132,8 +133,8 @@ func (s *TestSuite) TestPostOrder() {
 	r.Header.Add("Authorization", auth)
 
 	resp, err = s.server.Client().Do(r)
-	defer resp.Body.Close()
 	s.Require().NoError(err)
+	defer resp.Body.Close()
 
 	s.Require().Equal(http.StatusOK, resp.StatusCode)
 
@@ -143,8 +144,8 @@ func (s *TestSuite) TestPostOrder() {
 	r.Header.Add("Authorization", auth)
 
 	resp, err = s.server.Client().Do(r)
-	defer resp.Body.Close()
 	s.Require().NoError(err)
+	defer resp.Body.Close()
 
 	s.Require().Equal(http.StatusUnprocessableEntity, resp.StatusCode)
 }
