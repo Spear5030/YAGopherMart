@@ -142,6 +142,7 @@ func (s *TestSuite) SetupSuite() {
 	var err error
 
 	s.postgresContainer, err = testcontainer.NewPostgresContainer(ctx)
+	s.Require().NoError(err)
 
 	s.app, err = app.New(
 		config.Config{
