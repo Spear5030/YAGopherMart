@@ -1,0 +1,13 @@
+- number: "9278923470"
+  user_id: 10001
+  status: 4
+  accrual: 500
+  uploaded_at: "2020-12-10T15:15:45+03:00"
+- number: "12345678903"
+  user_id: 10001
+  status: 2
+  uploaded_at: "2020-12-10T15:12:01+03:00"
+- number: "346436439"
+  user_id: 10001
+  status: 3
+  uploaded_at: "2020-12-09T16:09:53+03:00"

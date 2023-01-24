@@ -138,6 +138,7 @@ func (h *Handler) PostOrder(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserID(r.Context())
+	h.logger.Debug("getOrders", zap.Int("user", userID))
 	if err != nil {
 		h.logger.Debug("Error with JWT token", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
