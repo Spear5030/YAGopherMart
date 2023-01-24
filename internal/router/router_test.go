@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/Spear5030/YAGopherMart/internal/accrualer"
 	"github.com/Spear5030/YAGopherMart/internal/config"
 	"github.com/Spear5030/YAGopherMart/internal/handler"
 	"github.com/Spear5030/YAGopherMart/internal/storage"
@@ -36,7 +37,8 @@ func TestRouter(t *testing.T) {
 	require.NoError(t, err)
 	repo, err := storage.New(lg, cfg.Database)
 	require.NoError(t, err)
-	useCase := usecase.New(lg, repo, cfg.Accrual)
+	acClient := accrualer.New(cfg.Accrual)
+	useCase := usecase.New(lg, repo, acClient)
 	require.NoError(t, err)
 	h := handler.New(lg, useCase, cfg.Key)
 	r := New(h)
