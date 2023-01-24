@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Spear5030/YAGopherMart/db/migrate"
-	"github.com/Spear5030/YAGopherMart/internal/accrualer"
 	"github.com/Spear5030/YAGopherMart/internal/config"
 	"github.com/Spear5030/YAGopherMart/internal/handler"
 	"github.com/Spear5030/YAGopherMart/internal/router"
@@ -19,10 +18,9 @@ import (
 )
 
 type App struct {
-	HTTPServer    *http.Server
-	logger        *zap.Logger
-	ticker        *time.Ticker
-	AcrrualClient *accrualer.Client
+	HTTPServer *http.Server
+	logger     *zap.Logger
+	ticker     *time.Ticker
 }
 
 func New(cfg config.Config) (*App, error) {
@@ -42,9 +40,7 @@ func New(cfg config.Config) (*App, error) {
 		return nil, err
 	}
 
-	acClient := accrualer.New(cfg.Accrual)
-
-	useCase := usecase.New(lg, repo, acClient)
+	useCase := usecase.New(lg, repo, cfg.Accrual)
 	h := handler.New(lg, useCase, cfg.Key)
 	r := router.New(h)
 
@@ -96,9 +92,8 @@ func New(cfg config.Config) (*App, error) {
 		Handler: r,
 	}
 	return &App{
-		HTTPServer:    srv,
-		ticker:        t,
-		AcrrualClient: acClient,
+		HTTPServer: srv,
+		ticker:     t,
 	}, nil
 }
 

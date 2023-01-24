@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/Spear5030/YAGopherMart/domain"
-	"github.com/Spear5030/YAGopherMart/internal/accrualer"
 	"github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -27,16 +26,16 @@ type Storager interface {
 }
 
 type usecase struct {
-	logger        *zap.Logger
-	storage       Storager
-	accrualClient *accrualer.Client
+	logger     *zap.Logger
+	storage    Storager
+	accrualDSN string
 }
 
-func New(logger *zap.Logger, storage Storager, accrualClient *accrualer.Client) *usecase {
+func New(logger *zap.Logger, storage Storager, accrualDSN string) *usecase {
 	return &usecase{
-		logger:        logger,
-		storage:       storage,
-		accrualClient: accrualClient,
+		logger:     logger,
+		storage:    storage,
+		accrualDSN: accrualDSN,
 	}
 }
 
@@ -84,18 +83,14 @@ func (uc *usecase) GetWithdrawals(ctx context.Context, userID int) ([]domain.Wit
 func (uc *usecase) WorkWithOrder(ctx context.Context, num string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uc.accrualClient.DSN+"/api/orders/"+num, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uc.accrualDSN+"/api/orders/"+num, nil)
 	if err != nil {
 		uc.logger.Debug("workOrder request error", zap.Error(err))
 		return err
 	}
-	resp, err := uc.accrualClient.Client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		uc.logger.Debug("workOrder accrual client error", zap.Error(err))
-		return err
-	}
-	if err != nil {
-		uc.logger.Debug("workOrder error", zap.Error(err))
 		return err
 	}
 	if resp.StatusCode == http.StatusOK {

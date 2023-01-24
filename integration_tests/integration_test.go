@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"github.com/Spear5030/YAGopherMart/domain"
 	"github.com/Spear5030/YAGopherMart/internal/app"
 	"github.com/Spear5030/YAGopherMart/internal/config"
 	"github.com/Spear5030/YAGopherMart/testutils"
 	"github.com/Spear5030/YAGopherMart/testutils/fixtureloader"
 	"github.com/Spear5030/YAGopherMart/testutils/testcontainer"
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/jarcoal/httpmock"
 	"net/http"
 
 	"testing"
@@ -119,6 +121,34 @@ func (s *TestSuite) TestPostOrder() {
 	s.Require().Equal(http.StatusUnprocessableEntity, resp.StatusCode)
 }
 
+// пока для теста httpmock и цикла тикера
+func (s *TestSuite) TestWorkers() {
+	httpmock.Activate()
+	responder, err := httpmock.NewJsonResponder(http.StatusOK, domain.Accrual{
+		Order:   "12345678903",
+		Status:  "PROCESSED",
+		Accrual: 555,
+	})
+	s.Require().NoError(err)
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		"localhost:8081/api/orders/12345678903",
+		responder,
+	)
+	time.Sleep(time.Second * 10)
+
+	auth := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFeHBpcmVkQXQiOiIyMDIzLTAxLTI1VDAwOjUwOjMwLjE5MDg4NjIrMDM6MDAiLCJpZCI6MTAwMDF9.m6F9WuPxEuMaugGZN9gTixmB0iiUNhMUjPKPqQkzExQ"
+	r, err := http.NewRequest(http.MethodGet, s.server.URL+"/api/user/orders", nil)
+	s.Require().NoError(err)
+	r.Header.Add("Authorization", auth)
+	resp, err := s.server.Client().Do(r)
+	s.Require().NoError(err)
+	defer resp.Body.Close()
+	s.Require().Equal(http.StatusOK, resp.StatusCode)
+	expected := s.fixtures.LoadString(s.T(), "fixtures/accrual/getOrdersAfterWork.json")
+	testutils.JSONEq(s.T(), expected, resp.Body)
+}
+
 func (s *TestSuite) SetupTest() {
 	db, err := sql.Open("postgres", s.postgresContainer.GetDSN())
 	s.Require().NoError(err)
@@ -148,12 +178,15 @@ func (s *TestSuite) SetupSuite() {
 		config.Config{
 			Database: s.postgresContainer.GetDSN(),
 			Key:      "P4SSW0RD",
+			Accrual:  "localhost:8081",
 		})
 	s.Require().NoError(err)
+	//httpmock.ActivateNonDefault(s.app.AcrrualClient)
 
 	s.fixtures = fixtureloader.NewLoader(testutils.Fixtures)
 
 	s.server = httptest.NewServer(s.app.HTTPServer.Handler)
+
 }
 
 func TestSuite_PostgreSQLStorage(t *testing.T) {
@@ -165,4 +198,5 @@ func (s *TestSuite) TearDownSuite() {
 	defer ctxCancel()
 
 	s.Require().NoError(s.postgresContainer.Terminate(ctx))
+	httpmock.DeactivateAndReset()
 }
