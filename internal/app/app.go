@@ -50,6 +50,10 @@ func New(cfg config.Config) (*App, error) {
 	ctx := context.Background()
 	nop := false //boolean for nop if 429(retry)
 	t := time.NewTicker(1 * time.Second * 5)
+	i := 0
+	if cfg.Instance > 1 {
+		i = cfg.Instance - 1
+	}
 	go func() {
 		for {
 			select {
@@ -58,7 +62,7 @@ func New(cfg config.Config) (*App, error) {
 				return
 			case <-t.C:
 				nop = false
-				orders, err := repo.GetOrdersForUpdate(ctx, n)
+				orders, err := repo.GetOrdersForUpdate(ctx, n, i)
 				if err != nil {
 					lg.Debug(err.Error())
 				}

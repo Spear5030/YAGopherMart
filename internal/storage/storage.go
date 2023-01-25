@@ -262,7 +262,7 @@ func (pgs *storage) GetOrders(ctx context.Context, userID int) ([]domain.Order, 
 	return orders, nil
 }
 
-func (pgs *storage) GetOrdersForUpdate(ctx context.Context, n int) ([]string, error) {
+func (pgs *storage) GetOrdersForUpdate(ctx context.Context, n int, i int) ([]string, error) {
 	var orders []string
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -271,8 +271,10 @@ func (pgs *storage) GetOrdersForUpdate(ctx context.Context, n int) ([]string, er
                     on	o.status=s.id 
        			where s.status='NEW' or s.status='PROCESSING'
 					order by o.uploaded_at
-						limit $1;`
-	rows, err := pgs.db.QueryContext(ctx, query, n)
+						limit $1
+						offset $2;`
+	// простое решение для запуска 2+ экземпляров приложения.
+	rows, err := pgs.db.QueryContext(ctx, query, n, n*i)
 	if err != nil {
 		pgs.logger.Debug(err.Error())
 		return nil, err
